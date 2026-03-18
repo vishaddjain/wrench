@@ -1,44 +1,58 @@
-import ast
 from .base import BaseDetectors
 
 class MediumDetectors(BaseDetectors):
 
-    def visit_Call(self, node):
+    def __init__(self):
+        super().__init__()
+
+    def visit_function_call(self, node):
         if self.depth >= 2:
-            if isinstance(node.func, ast.Attribute):
-                if node.func.attr == "append":
-                    self.warnings.append(
-                        f"List append inside nested loop at line {node.lineno} — consider restructuring"
-                    )
-        
-        if isinstance(node.func, ast.Name):
-            if node.func.id == "list":
-               if len(node.args) > 0:
-                   first_arg = node.args[0]
-                   if isinstance(first_arg, ast.Call):
-                       if isinstance(first_arg.func, ast.Name):
-                            if first_arg.func.id =="range":
-                                self.warnings.append(
-                                f"Unnecessary list creation at line {node.lineno} — list(range(n)) wastes memory, just use range(n) directly"
-                            )
-                                
+            name = node.metadata.get("name", None)
+            if name == "append":
+                self.warnings.append(
+                    f"List append inside nested loop at line {node.lineno} — consider restructuring"
+                )
+
+        name = node.metadata.get("name", None)
+        if name == "list":
+            children_names = [
+                c.metadata.get("name", "") 
+                for c in node.children
+            ]
+            if "range" in children_names:
+                self.warnings.append(
+                    f"Unnecessary list creation at line {node.lineno} — just use range(n) directly"
+                )
+
         self.generic_visit(node)
 
-    def visit_Name(self, node):
-        if self.depth >= 1 and node.id in self.global_vars:
-            access_type = "Accessed" if isinstance(node.ctx, ast.Load) else "modified"
+    def visit_exception_handler(self, node):
+        exception_type = node.metadata.get("exception_type", None)
+        if exception_type is None:
             self.warnings.append(
-                f"Global variable '{node.id}' {access_type} inside loop at line {node.lineno} — consider caching it locally"
+                f"Bare except at line {node.lineno} — catches everything, be specific"
+            )
+        elif exception_type == "Exception":
+            self.warnings.append(
+                f"Overly broad 'except Exception' at line {node.lineno} — catch specific exceptions"
             )
         self.generic_visit(node)
 
-    def visit_ExceptHandler(self, node):
-        if node.type is None:
+    def visit_function_def(self, node):
+        defaults = node.metadata.get("mutable_defaults", [])
+        for lineno in defaults:
             self.warnings.append(
-                f"Bare except at line {node.lineno} — catches everything including system exceptions, be specific"
+                f"Mutable default argument at line {lineno} — use None instead"
             )
-        elif isinstance(node.type, ast.Name) and node.type.id == "Exception":
-            self.warnings.append(
-                f"Overly broad 'except Exception' at line {node.lineno} — consider catching a specific exception"
-            )
+        super().visit_function_def(node)
+
+    def visit_identifier(self, node):
+        if self.depth >= 1:
+            name = node.metadata.get("name", None)
+            if name and name in self.global_vars:
+                self.warnings.append(
+                    f"Global variable '{name}' accessed inside loop at line {node.lineno} — consider caching it locally"
+                )
         self.generic_visit(node)
+
+            

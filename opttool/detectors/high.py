@@ -1,11 +1,10 @@
-import ast
 from .base import BaseDetectors
 
 class HighDetectors(BaseDetectors):
     
     CHEAP_CALLS = {"print", "len", "range", "str", "int", "float", "bool", "type"}
 
-    def visit_For(self, node):
+    def visit_loop(self, node):
         self.depth += 1
         if self.depth >= 2 :
             self.warnings.append(
@@ -13,50 +12,35 @@ class HighDetectors(BaseDetectors):
             )
         self.generic_visit(node)
         self.depth -= 1
-
-    visit_While = visit_For
     
-    def visit_Call(self, node):
+    def visit_function_call(self, node):
         if self.depth >= 1:
-            if isinstance(node.func, ast.Name):
-                name = node.func.id
-            elif isinstance(node.func, ast.Attribute):
-                name = node.func.attr
-            else:
-                name = None
-            
+            name = node.metadata.get("name", None)
             if name and name not in self.CHEAP_CALLS:
                 self.warnings.append(
                     f"Function call '{name}' inside loop at line {node.lineno} — consider moving it out"
                 )
-
         self.generic_visit(node)
 
-    def visit_Attribute(self, node):
+    def visit_attribute_access(self, node):
         if self.depth >= 1:
-            if isinstance(node.value, ast.Name):
-                obj_name = node.value.id
-                attr_name = node.attr
-                key = f"{obj_name}.{attr_name}"
-
-                if key not in self.attr_counts:
-                    self.attr_counts[key] = []
-                self.attr_counts[key].append(node.lineno)
-
+            name = node.metadata.get("name", None)
+            if name:
+                if name not in self.attr_counts:
+                    self.attr_counts[name] = []
+                self.attr_counts[name].append(node.lineno)
         self.generic_visit(node)
     
+    def visit_string_concat(self, node):
+        if self.depth >= 1:
+            self.warnings.append(
+                f"String concatenation at line {node.lineno} — use ''.join() instead"
+            )
+        self.generic_visit(node)
+
     def check_attr_counts(self):
         for key, lines in self.attr_counts.items():
             if len(lines) >= 2:
                 self.warnings.append(
-                    f"Attribute '{key}' accessed {len(lines)} times in a loop at lines {lines} — cache it before the loop"
+                    f"Attribute '{key}' accessed {len(lines)} times in loop at lines {lines} — cache it"
                 )
-
-    def visit_AugAssign(self, node):
-        if self.depth >= 1:
-            if isinstance(node.op, ast.Add):
-                self.warnings.append(
-                    f"String concatenation with += at line {node.lineno} — use ''.join() instead"
-                )
-        self.generic_visit(node)
-
