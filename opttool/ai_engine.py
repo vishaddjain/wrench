@@ -12,7 +12,7 @@ def analyse(code, warnings):
     warnings_text = "\n".join(f"- {w}" for w in warnings)
     
     prompt = f"""
-You are a Python performance expert.
+You are a performance analytics expert.
 
 Here is the code:
 {code}
