@@ -1,10 +1,21 @@
 import ast
 from .base import BaseDetectors
 
-class HighDetectors(ast.NodeVisitor):
+class HighDetectors(BaseDetectors):
     
     CHEAP_CALLS = {"print", "len", "range", "str", "int", "float", "bool", "type"}
 
+    def visit_For(self, node):
+        self.depth += 1
+        if self.depth >= 2 :
+            self.warnings.append(
+                f"Nested loop at line {node.lineno} - potential O(n²)"
+            )
+        self.generic_visit(node)
+        self.depth -= 1
+
+    visit_While = visit_For
+    
     def visit_Call(self, node):
         if self.depth >= 1:
             if isinstance(node.func, ast.Name):
@@ -23,7 +34,7 @@ class HighDetectors(ast.NodeVisitor):
 
     def visit_Attribute(self, node):
         if self.depth >= 1:
-            if isinstance(node.value, node.Name):
+            if isinstance(node.value, ast.Name):
                 obj_name = node.value.id
                 attr_name = node.attr
                 key = f"{obj_name}.{attr_name}"

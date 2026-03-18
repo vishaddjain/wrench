@@ -9,10 +9,6 @@ class BaseDetectors(ast.NodeVisitor):
 
     def visit_For(self, node):
         self.depth += 1
-        if self.depth >= 2 :
-            self.warnings.append(
-                f"Nested loop at line {node.lineno} - potential O(n²)"
-            )
         self.generic_visit(node)
         self.depth -= 1
 
