@@ -1,7 +1,0 @@
-LOOP_TYPES = ["for_statement", "while_statement", "do_statement"]
-FUNCTION_CALL = ["call_expression"]
-FUNCTION_DEF = ["function_definition"]
-ATTRIBUTE_ACCESS = ["field_expression"]
-STRING_CONCAT = ["assignment_expression"]
-EXCEPTION_HANDLER = []
-GLOBAL_STATEMENT = ["declaration"]
