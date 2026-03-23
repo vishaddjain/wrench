@@ -5,4 +5,4 @@ ATTRIBUTE_ACCESS = ["attribute"]
 STRING_CONCAT = ["augmented_assignment"]
 EXCEPTION_HANDLER = ["except_clause"]
 GLOBAL_STATEMENT = ["global_statement"]
-
+IMPORT = ["import_statement", "import_from_statement"]

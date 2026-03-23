@@ -3,12 +3,13 @@ from .base import BaseDetectors
 class HighDetectors(BaseDetectors):
     
     CHEAP_CALLS = {"print", "len", "range", "str", "int", "float", "bool", "type"}
+    EXPENSIVE_CALLS = {"open", "requests", "get", "post", "read", "write", "connect", "execute"}
 
     def visit_loop(self, node):
         self.depth += 1
         if self.depth >= 2 :
             self.warnings.append(
-                f"Nested loop at line {node.lineno} - potential O(n²)"
+                f"Nested loop at line {node.lineno} - potential O(n²)."
             )
         self.generic_visit(node)
         self.depth -= 1
@@ -16,9 +17,13 @@ class HighDetectors(BaseDetectors):
     def visit_function_call(self, node):
         if self.depth >= 1:
             name = node.metadata.get("name", None)
-            if name and name not in self.CHEAP_CALLS:
+            if name and name in self.EXPENSIVE_CALLS:
                 self.warnings.append(
-                    f"Function call '{name}' inside loop at line {node.lineno} — consider moving it out"
+                    f"I/O call {name} inside loop at line {node.lineno} - consider moving/removing it out."
+                )
+            elif name and name not in self.CHEAP_CALLS:
+                self.warnings.append(
+                    f"Function call '{name}' inside loop at line {node.lineno} — consider moving it out."
                 )
         self.generic_visit(node)
 
@@ -34,7 +39,7 @@ class HighDetectors(BaseDetectors):
     def visit_string_concat(self, node):
         if self.depth >= 1:
             self.warnings.append(
-                f"String concatenation at line {node.lineno} — use ''.join() instead"
+                f"String concatenation at line {node.lineno} — use ''.join() instead."
             )
         self.generic_visit(node)
 
@@ -42,5 +47,7 @@ class HighDetectors(BaseDetectors):
         for key, lines in self.attr_counts.items():
             if len(lines) >= 2:
                 self.warnings.append(
-                    f"Attribute '{key}' accessed {len(lines)} times in loop at lines {lines} — cache it"
+                    f"Attribute '{key}' accessed {len(lines)} times in loop at lines {lines} — cache it."
                 )
+
+        

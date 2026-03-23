@@ -2,18 +2,27 @@ from .base import BaseDetectors
 
 class MediumDetectors(BaseDetectors):
 
+    SORT_CALLS = {"sort", "sorted", "sort_by", "order_by"}
+
     def __init__(self):
         super().__init__()
 
     def visit_function_call(self, node):
-        if self.depth >= 2:
-            name = node.metadata.get("name", None)
-            if name == "append":
-                self.warnings.append(
-                    f"List append inside nested loop at line {node.lineno} — consider restructuring"
-                )
 
         name = node.metadata.get("name", None)
+
+        if self.depth >= 1:
+            if name and name in self.SORT_CALLS:
+                self.warnings.append(
+                    f"Unnecessary sorting {name} inside loops at line {node.lineno}."
+                ) 
+
+        if self.depth >= 2:
+            if name == "append":
+                self.warnings.append(
+                    f"List append inside nested loop at line {node.lineno} — consider restructuring."
+                )
+
         if name == "list":
             children_names = [
                 c.metadata.get("name", "") 
@@ -21,20 +30,20 @@ class MediumDetectors(BaseDetectors):
             ]
             if "range" in children_names:
                 self.warnings.append(
-                    f"Unnecessary list creation at line {node.lineno} — just use range(n) directly"
+                    f"Unnecessary list creation at line {node.lineno} — just use range(n) directly."
                 )
-
+        
         self.generic_visit(node)
 
     def visit_exception_handler(self, node):
         exception_type = node.metadata.get("exception_type", None)
         if exception_type is None:
             self.warnings.append(
-                f"Bare except at line {node.lineno} — catches everything, be specific"
+                f"Bare except at line {node.lineno} — catches everything, be specific."
             )
         elif exception_type == "Exception":
             self.warnings.append(
-                f"Overly broad 'except Exception' at line {node.lineno} — catch specific exceptions"
+                f"Overly broad 'except Exception' at line {node.lineno} — catch specific exceptions."
             )
         self.generic_visit(node)
 
@@ -42,7 +51,7 @@ class MediumDetectors(BaseDetectors):
         defaults = node.metadata.get("mutable_defaults", [])
         for lineno in defaults:
             self.warnings.append(
-                f"Mutable default argument at line {lineno} — use None instead"
+                f"Mutable default argument at line {lineno} — use None instead."
             )
         super().visit_function_def(node)
 
@@ -51,8 +60,13 @@ class MediumDetectors(BaseDetectors):
             name = node.metadata.get("name", None)
             if name and name in self.global_vars:
                 self.warnings.append(
-                    f"Global variable '{name}' accessed inside loop at line {node.lineno} — consider caching it locally"
+                    f"Global variable '{name}' accessed inside loop at line {node.lineno} — consider caching it locally."
                 )
         self.generic_visit(node)
 
-            
+    def visit_import(self, node):
+        if self.depth > 0:
+            self.warnings.append(
+                f"Import is at function level instead of top at line {node.lineno}."
+            )
+        self.generic_visit(node)

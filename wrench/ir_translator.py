@@ -8,6 +8,7 @@ GENERIC_TYPES = {
     "STRING_CONCAT": "string_concat",
     "EXCEPTION_HANDLER": "exception_handler",
     "GLOBAL_STATEMENT": "global_statement",
+    "IMPORT": "import"
 }
 
 class IRTranslator:
