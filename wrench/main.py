@@ -9,6 +9,7 @@ from ir_translator import IRTranslator
 from profilers.profiler import profile_file, parse_stats, write_temp_file, delete_temp_file
 from errors import handle_error
 from wrenchignore import load_wrenchignore, is_ignored
+from report import print_summary, print_profiling, ask_and_analyse, ask_and_apply_fixes, save_report
 
 IGNORE_DIRS = {"venv", "node_modules", ".git", "__pycache__", "dist", "build", ".vscode"}
 
@@ -34,7 +35,8 @@ def run_analysis(filepath):
     patterns = load_wrenchignore(os.path.dirname(filepath))
     if is_ignored(filepath, patterns):
         return [], None, None
-    #language check
+
+    # language check
     language = detect_language(filepath)
     if language is None:
         handle_error("unsupported_language", filepath)
@@ -100,17 +102,15 @@ def analyse_single_file(filename):
         print("No issues found!")
         return
 
+    # print summary
+    print_summary(1, {language}, {filename: warnings})
+
+    # print warnings
+    print("\n--- Warnings ---\n")
     for w in warnings:
-        print(w)
+        print(f"  {w}")
 
     results = {}
-
-    def run_explanation():
-        try:
-            results["explanation"] = analyse(code, warnings)
-        except Exception:
-            handle_error("api_error", filename)
-            results["explanation"] = None
 
     def run_profiling():
         try:
@@ -134,32 +134,24 @@ def analyse_single_file(filename):
             handle_error("profiling_error", filename)
             results["profiling"] = None
 
-    t1 = threading.Thread(target=run_explanation)
-    t2 = threading.Thread(target=run_profiling)
+    t = threading.Thread(target=run_profiling)
+    t.start()
+    t.join()
 
-    t1.start()
-    t2.start()
-
-    t1.join()
-    t2.join()
-
-    if results.get("explanation"):
-        print("\n--- AI Analysis ---\n")
-        print(results["explanation"])
-
+    # profiling output
     if results.get("profiling") is None and language != "python":
         print("\n--- Profiling not supported for this language yet ---")
     elif results.get("before") and results.get("after"):
-        print("\n--- Performance Profile ---\n")
-        print("Top 5 slowest functions BEFORE fix:")
-        for stat in results["before"][:5]:
-            func = stat['function'].split(":")[-1]
-            print(f"  {func:<30} cumtime: {stat['cumtime']}s")
+        print_profiling(results["before"], results["after"])
 
-        print("\nTop 5 slowest functions AFTER fix:")
-        for stat in results["after"][:5]:
-            func = stat['function'].split(":")[-1]
-            print(f"  {func:<30} cumtime: {stat['cumtime']}s")
+    # AI analysis — ask user
+    ask_and_analyse(code, warnings)
+
+    # apply fixes — ask user
+    ask_and_apply_fixes(code, warnings, filename)
+
+    # save report — ask user
+    save_report(1, {language}, {filename: warnings})
 
 def analyse_folder(folder):
     files = get_files(folder)
@@ -168,11 +160,12 @@ def analyse_folder(folder):
         print("No supported files found in folder.")
         return
 
-    print(f"Found {len(files)} files to analyse...\n")
-
     all_results = {}
+    languages = set()
     for file in files:
         warnings, language, code = run_analysis(file)
+        if language:
+            languages.add(language)
         if warnings:
             all_results[file] = warnings
 
@@ -180,21 +173,30 @@ def analyse_folder(folder):
         print("No issues found across all files!")
         return
 
-    total = sum(len(w) for w in all_results.values())
-    print(f"Found {total} issues across {len(all_results)} files:\n")
+    # print summary
+    print_summary(len(files), languages, all_results)
 
+    # print warnings per file
+    print("\n--- Warnings ---\n")
     for file, warnings in all_results.items():
         print(f"--- {file} ---")
         for w in warnings:
             print(f"  {w}")
         print()
 
-    print("\n--- AI Analysis ---\n")
-    try:
-        explanation = analyse_folder_ai(all_results)
-        print(explanation)
-    except Exception:
-        handle_error("api_error", folder)
+    # AI analysis — one call for whole folder, ask user
+    analysis = None
+    choice = input("\nWant AI analysis? (y/n): ").strip().lower()
+    if choice == 'y':
+        try:
+            analysis = analyse_folder_ai(all_results)
+            print("\n--- AI Analysis ---\n")
+            print(analysis)
+        except Exception:
+            handle_error("api_error", folder)
+
+    # save report — ask user
+    save_report(len(files), languages, all_results, analysis=analysis)
 
 if len(sys.argv) < 2:
     print("Usage: python main.py <filename or folder>")
