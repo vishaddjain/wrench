@@ -3,7 +3,7 @@ import os
 import threading
 from detectors.high import HighDetectors
 from detectors.medium import MediumDetectors
-from ai_engine import analyse, get_fixed_code
+from ai_engine import analyse, get_fixed_code, analyse_folder as analyse_folder_ai
 from parser_engine import get_parser, detect_language
 from ir_translator import IRTranslator
 from profilers.profiler import profile_file, parse_stats, write_temp_file, delete_temp_file
@@ -188,6 +188,13 @@ def analyse_folder(folder):
         for w in warnings:
             print(f"  {w}")
         print()
+
+    print("\n--- AI Analysis ---\n")
+    try:
+        explanation = analyse_folder_ai(all_results)
+        print(explanation)
+    except Exception:
+        handle_error("api_error", folder)
 
 if len(sys.argv) < 2:
     print("Usage: python main.py <filename or folder>")
