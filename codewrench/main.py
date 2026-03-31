@@ -1,15 +1,15 @@
 import sys
 import os
 import threading
-from detectors.high import HighDetectors
-from detectors.medium import MediumDetectors
-from ai_engine import analyse, get_fixed_code, analyse_folder as analyse_folder_ai
-from parser_engine import get_parser, detect_language
-from ir_translator import IRTranslator
-from profilers.profiler import profile_file, parse_stats, write_temp_file, delete_temp_file
-from errors import handle_error
-from wrenchignore import load_wrenchignore, is_ignored
-from reports import print_summary, print_profiling, ask_and_analyse, ask_and_apply_fixes, save_report
+from .detectors.high import HighDetectors
+from .detectors.medium import MediumDetectors
+from .ai_engine import analyse, get_fixed_code, analyse_folder as analyse_folder_ai
+from .parser_engine import get_parser, detect_language
+from .ir_translator import IRTranslator
+from .profilers.profiler import profile_file, parse_stats, write_temp_file, delete_temp_file
+from .errors import handle_error
+from .wrenchignore import load_wrenchignore, is_ignored
+from .reports import print_summary, print_profiling, ask_and_analyse, ask_and_apply_fixes, save_report
 
 IGNORE_DIRS = {"venv", "node_modules", ".git", "__pycache__", "dist", "build", ".vscode"}
 

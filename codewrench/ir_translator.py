@@ -1,4 +1,4 @@
-from ir import IRNode
+from .ir import IRNode
 
 GENERIC_TYPES = {
     "LOOP": "loop",

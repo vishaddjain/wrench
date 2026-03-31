@@ -1,4 +1,4 @@
-from ai_engine import analyse, get_fixed_code
+from .ai_engine import analyse, get_fixed_code
 
 def print_summary(files_scanned, languages, all_results):
     total_issues = sum(len(w) for w in all_results.values())
