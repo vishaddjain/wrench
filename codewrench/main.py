@@ -1,6 +1,7 @@
 import sys
 import os
 import threading
+import argparse
 from .detectors.high import HighDetectors
 from .detectors.medium import MediumDetectors
 from .ai_engine import analyse, get_fixed_code, analyse_folder as analyse_folder_ai
@@ -9,7 +10,7 @@ from .ir_translator import IRTranslator
 from .profilers.profiler import profile_file, parse_stats, write_temp_file, delete_temp_file
 from .errors import handle_error
 from .wrenchignore import load_wrenchignore, is_ignored
-from .reports import print_summary, print_profiling, ask_and_analyse, ask_and_apply_fixes, save_report
+from .reports import print_summary, print_profiling, ask_and_analyse, ask_and_apply_fixes, save_report, revert_file
 
 IGNORE_DIRS = {"venv", "node_modules", ".git", "__pycache__", "dist", "build", ".vscode"}
 
@@ -109,7 +110,7 @@ def analyse_single_file(filename):
     print("\n--- Warnings ---\n")
     for w in warnings:
         print(f"  {w}")
-
+    print()
     results = {}
 
     def run_profiling():
@@ -199,18 +200,29 @@ def analyse_folder(folder):
     save_report(len(files), languages, all_results, analysis=analysis)
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: codewrench <filename or folder>")
-        exit()
+    parser = argparse.ArgumentParser(
+        prog="codewrench",
+        description="A multi-language code performance analyser."
+    )
+    parser.add_argument("target", nargs="?", help="File or folder to analyse")
+    parser.add_argument("--revert", metavar="FILE", help="Revert AI fixes from .bak file")
+    
+    args = parser.parse_args()
 
-    target = sys.argv[1]
 
-    if os.path.isdir(target):
-        analyse_folder(target)
-    elif os.path.isfile(target):
-        analyse_single_file(target)
+    if args.revert:
+        revert_file(args.revert)
+    elif args.target:
+        target = args.target
+        if os.path.isdir(target):
+            analyse_folder(target)
+        elif os.path.isfile(target):
+            analyse_single_file(target)
+        else:
+            handle_error("file_not_found", target, fatal=True)
     else:
-        handle_error("file_not_found", target, fatal=True)
+        parser.print_help()
+        exit()
 
 if __name__ == "__main__":
     main()

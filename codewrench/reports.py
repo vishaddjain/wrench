@@ -1,3 +1,5 @@
+import shutil
+import os
 from .ai_engine import analyse, get_fixed_code
 
 def print_summary(files_scanned, languages, all_results):
@@ -38,6 +40,12 @@ def ask_and_apply_fixes(code, warnings, filepath):
             f.write(fixed_code)
         print(f"Original saved as {filepath}.bak")
         print(f"Fixes applied to {filepath}")
+        keep_bak = input("Keep backup file? (y/n): ").strip().lower()
+        if keep_bak == 'n':
+            os.remove(filepath + ".bak")
+            print(f"Backup removed.")
+        else:
+            print(f"Backup kept at {filepath}.bak")
 
 def save_report(files_scanned, languages, all_results, analysis=None):
     choice = input("\nSave report? (y/n): ").strip().lower()
@@ -70,3 +78,13 @@ def save_report(files_scanned, languages, all_results, analysis=None):
             f.write("\n")
 
     print("Report saved to codewrench_report.md")
+
+
+def revert_file(filepath):
+    bak_path = filepath + ".bak"
+    if os.path.exists(bak_path):
+        shutil.copy(bak_path, filepath)
+        os.remove(bak_path)
+        print(f"Reverted {filepath} from {bak_path}")
+    else:
+        print(f"No backup found for {filepath} — nothing to revert.")
