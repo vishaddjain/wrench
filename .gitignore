@@ -6,3 +6,6 @@ __pycache__/
 code.py
 **/.DS_Store
 .DS_Store
+dist/
+build/
+*.egg-info/

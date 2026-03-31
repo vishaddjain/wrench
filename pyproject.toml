@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codewrench"
+version = "0.1.0"
+description = "A multi-language code performance analyser with static analysis and AI-powered fix generation."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Vishad Jain", email = "vishadjain2304@gmail.com" }
+]
+requires-python = ">=3.10"
+keywords = ["performance", "static-analysis", "code-analysis", "AI", "developer-tools"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "groq>=1.1.1",
+    "python-dotenv>=1.2.2",
+    "requests>=2.32.5",
+    "tree-sitter>=0.25.2",
+    "tree-sitter-python>=0.25.0",
+    "tree-sitter-javascript>=0.25.0",
+    "tree-sitter-typescript>=0.23.2",
+    "tree-sitter-go>=0.25.0",
+    "tree-sitter-c>=0.24.1",
+    "tree-sitter-cpp>=0.23.4",
+]
+
+[project.scripts]
+codewrench = "main:main"
+
+[project.urls]
+Homepage = "https://github.com/vishaddjain/wrench"
+Issues = "https://github.com/vishaddjain/wrench/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
