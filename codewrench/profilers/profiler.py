@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import subprocess
 
 def profile_file(filename):
@@ -33,7 +34,8 @@ def parse_stats(raw_output):
     return stats
 
 def write_temp_file(code, original_filename):
-    temp_file = original_filename.replace("py", "_wrench_temp.py")
+    base, ext = os.path.splitext(original_filename)
+    temp_file = base + "_wrench_temp" + ext
     with open(temp_file, "w") as f:
         f.write(code)
     return temp_file
@@ -42,3 +44,28 @@ def delete_temp_file(temp_filename):
     if os.path.exists(temp_filename):
         os.remove(temp_filename)
 
+def profile_node(filename):
+    start = time.time()
+    result = subprocess.run(
+        ["node", filename],
+        capture_output=True,
+        text=True,
+        cwd=os.path.dirname(os.path.abspath(filename))
+    )
+    end = time.time()
+    if result.returncode != 0:
+        raise Exception(f"Node.js error: {result.stderr}")
+    return round(end - start, 3)
+
+def profile_go(filename):
+    start = time.time()
+    result = subprocess.run(
+        ["go", "run", filename],
+        capture_output=True,
+        text=True,
+        cwd=os.path.dirname(os.path.abspath(filename))
+    )
+    end = time.time()
+    if result.returncode != 0:
+        raise Exception(f"Go error: {result.stderr}")
+    return round(end - start, 3)

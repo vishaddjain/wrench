@@ -143,7 +143,7 @@ IR translator converts to language-agnostic representation
     ↓
 20 detectors run static analysis on the IR
     ↓
-Before/after profiling (Python)
+Before/after profiling (Python, Node.js, go)
     ↓
 Findings sent to Groq (Llama 3.3 70B)
     ↓
@@ -165,7 +165,7 @@ The static analysis layer is deterministic — it either finds a nested loop or 
 - [x] `.wrenchignore` support
 - [x] Smart API batching — one call per folder, not per file
 - [x] `pip install codewrench`
-- [ ] Multi-language profiling (Node, Go, gcc)
+- [x] Multi-language profiling (Node, Go)
 - [ ] Language-specific detectors
 - [ ] Git diff integration — analyse only what changed
 - [ ] VS Code extension
@@ -176,7 +176,7 @@ The static analysis layer is deterministic — it either finds a nested loop or 
 ## Project structure
 
 ```
-wrench/
+codewrench/
 ├── detectors/
 │   ├── base.py          ← depth tracking, core visitor
 │   ├── high.py          ← high priority detectors

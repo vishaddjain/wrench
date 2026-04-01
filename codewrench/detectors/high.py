@@ -22,7 +22,7 @@ class HighDetectors(BaseDetectors):
                 self.warnings.append(
                     f"re.compile() inside loop at line {node.lineno} — move it outside the loop, compile once and reuse."
                 )
-            elif name and name in ["print", "logging.info", "logging.warning", "logging.error"]:
+            elif name and name in ["print", "logging.info", "logging.warning", "logging.error", "console.log"]:
                 self.warnings.append(
                     f"print()/logging call inside loop at line {node.lineno} — I/O on every iteration, move outside or use buffered logging."
                 )

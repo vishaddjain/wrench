@@ -2,12 +2,13 @@ import sys
 import os
 import threading
 import argparse
+from dotenv import load_dotenv
 from .detectors.high import HighDetectors
 from .detectors.medium import MediumDetectors
 from .ai_engine import analyse, get_fixed_code, analyse_folder as analyse_folder_ai
 from .parser_engine import get_parser, detect_language
 from .ir_translator import IRTranslator
-from .profilers.profiler import profile_file, parse_stats, write_temp_file, delete_temp_file
+from .profilers.profiler import profile_file, profile_node, profile_go, parse_stats, write_temp_file, delete_temp_file
 from .errors import handle_error
 from .wrenchignore import load_wrenchignore, is_ignored
 from .reports import print_summary, print_profiling, ask_and_analyse, ask_and_apply_fixes, save_report, revert_file
@@ -115,21 +116,37 @@ def analyse_single_file(filename):
 
     def run_profiling():
         try:
-            if language != "python":
-                results["profiling"] = None
-                return
-
-            before_raw = profile_file(filename)
-            before_stats = parse_stats(before_raw)
-
             fixed_code = get_fixed_code(code, warnings)
             temp_file = write_temp_file(fixed_code, filename)
-            after_raw = profile_file(temp_file)
-            after_stats = parse_stats(after_raw)
-            delete_temp_file(temp_file)
 
-            results["before"] = before_stats
-            results["after"] = after_stats
+            if language == "python":
+                before_raw = profile_file(filename)
+                before_stats = parse_stats(before_raw)
+                after_raw = profile_file(temp_file)
+                after_stats = parse_stats(after_raw)
+                delete_temp_file(temp_file)
+                results["before"] = before_stats
+                results["after"] = after_stats
+                results["profiling_type"] = "cprofile"
+
+            elif language in ("javascript", "typescript"):
+                before_time = profile_node(filename)
+                after_time = profile_node(temp_file)
+                delete_temp_file(temp_file)
+                results["before_time"] = before_time
+                results["after_time"] = after_time
+                results["profiling_type"] = "time"
+
+            elif language == "go":
+                before_time = profile_go(filename)
+                after_time = profile_go(temp_file)
+                delete_temp_file(temp_file)
+                results["before_time"] = before_time
+                results["after_time"] = after_time
+                results["profiling_type"] = "time"
+
+            else:
+                results["profiling"] = None
 
         except Exception:
             handle_error("profiling_error", filename)
@@ -139,11 +156,20 @@ def analyse_single_file(filename):
     t.start()
     t.join()
 
-    # profiling output
-    if results.get("profiling") is None and language != "python":
-        print("\n--- Profiling not supported for this language yet ---")
-    elif results.get("before") and results.get("after"):
+    profiling_type = results.get("profiling_type")
+
+    if profiling_type == "cprofile":
         print_profiling(results["before"], results["after"])
+    elif profiling_type == "time":
+        before = results["before_time"]
+        after = results["after_time"]
+        improvement = round((before - after) / before * 100, 1) if before > 0 else 0
+        print("\n--- Performance Profile ---\n")
+        print(f"  Execution time BEFORE fix: {before}s")
+        print(f"  Execution time AFTER fix:  {after}s")
+        print(f"  Improvement: {improvement}% faster")
+    else:
+        print("\n--- Profiling not supported for this language yet ---")
 
     # AI analysis — ask user
     ask_and_analyse(code, warnings)
@@ -200,6 +226,15 @@ def analyse_folder(folder):
     save_report(len(files), languages, all_results, analysis=analysis)
 
 def main():
+    
+    load_dotenv()
+
+    if not os.getenv("GROQ_API_KEY"):
+        print("No GROQ_API_KEY found.")
+        print("Create a .env file in your current directory with:")
+        print("  GROQ_API_KEY=your_key_here")
+        print("Get a free key at https://console.groq.com")
+        exit(1)
     parser = argparse.ArgumentParser(
         prog="codewrench",
         description="A multi-language code performance analyser."
