@@ -1,15 +1,14 @@
 # CodeWrench
 
-![PyPI](https://img.shields.io/pypi/v/codewrench)
-![Downloads](https://img.shields.io/pypi/dm/codewrench)
-![Stars](https://img.shields.io/github/stars/vishaddjain/codewrench?style=social)
-![License](https://img.shields.io/github/license/vishaddjain/codewrench)
-![Python](https://img.shields.io/badge/python-3.9+-blue)
-![Built with](https://img.shields.io/badge/Built%20with-Tree--sitter-orange)
-
 <p align="center">
   <img src="assets/codewrench_logo.png" width="200"/>
 </p>
+
+
+![PyPI](https://img.shields.io/pypi/v/codewrench)
+![License](https://img.shields.io/github/license/vishaddjain/codewrench)
+![Python](https://img.shields.io/badge/python-3.9+-blue)
+![Built with](https://img.shields.io/badge/Built%20with-Tree--sitter-orange)
 
 > Point it at your code. Get back what's slow and how to fix it.
 
@@ -62,10 +61,6 @@ codewrench --revert <file>             # restore from .bak backup
 ```
 
 ### Example output
-
-<p align="center">
-  <img src="assets/demo.png" width="700"/>
-</p>
 
 ```
 ========================================

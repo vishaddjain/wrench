@@ -9,4 +9,3 @@ code.py
 dist/
 build/
 *.egg-info/
-assets/
