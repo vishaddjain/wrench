@@ -4,6 +4,30 @@ All notable changes to codewrench will be documented here.
 
 ---
 
+## [1.0.0] — 2026-04-16
+
+### Added
+- Confidence-aware warning filtering with `high`, `medium`, and `low` levels
+- `--all` flag to include low confidence warnings in analysis output
+- Grouped markdown reports with summary, confidence breakdown, top issue types, and top affected files
+- Inline `wrench:ignore` support documented in the README
+
+### Fixed
+- Reduced false positives across large real-world repos, especially in test suites
+- Duplicate warnings are now deduplicated before reporting
+- Python profiling now correctly fails when the target script crashes
+- `--save-report` now works even when no issues are found
+- Version metadata is now aligned across package files
+
+### Improved
+- Test-file detection is more accurate and now recognizes common test directory patterns
+- Attribute-cache warnings are less noisy and better filtered in tests
+- Expensive I/O call detection is stricter and avoids common false positives like generic `.get()`
+- Self-analysis output is cleaner by avoiding obvious noise from internal reporting code and lazy rule imports
+- README now reflects the current CLI behavior and report format
+
+---
+
 ## [0.2.0] — 2026-04-06
 
 ### Added
