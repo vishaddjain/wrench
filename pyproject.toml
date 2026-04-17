@@ -37,8 +37,8 @@ dependencies = [
 codewrench = "codewrench.main:main"
 
 [project.urls]
-Homepage = "https://github.com/vishaddjain/wrench"
-Issues = "https://github.com/vishaddjain/wrench/issues"
+Homepage = "https://github.com/vishaddjain/codewrench"
+Issues = "https://github.com/vishaddjain/codewrench/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
